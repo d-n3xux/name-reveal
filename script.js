@@ -25,6 +25,27 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
+// --- PRE-REVEAL IDLE CANVAS ENGINE (FIXES STUCK TRAILS) ---
+// Continually loops and clears the background so particles decay and disappear natively
+function drawPreRevealTrailLoop() {
+    if (revealTriggered) return; // Disengage once main drop starts
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    ripples.forEach((r, idx) => {
+        r.update();
+        r.draw();
+        if (r.alpha <= 0) {
+            ripples.splice(idx, 1);
+        }
+    });
+    
+    requestAnimationFrame(drawPreRevealTrailLoop);
+}
+// Start tracking loop immediately on load
+requestAnimationFrame(drawPreRevealTrailLoop);
+
+
 // --- SFX AUDIO LOGIC BLOCK ---
 function playWhooshSFX() {
     try {
@@ -87,14 +108,14 @@ function playFlowerRustleSFX() {
     } catch (e) { console.log(e); }
 }
 
-// --- FEATURE 3: UPGRADED FADING GLITTER TRAIL ENGINE ---
+// --- GLITTER TRAIL ENGINE BLOCK ---
 class RippleParticle {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.radius = Math.random() * 2.5 + 1.5; // Shimmering glitter sizing
+        this.radius = Math.random() * 2.5 + 1.5; 
         this.alpha = 1;
-        this.decay = Math.random() * 0.02 + 0.025; // Continuous clean decay rate
+        this.decay = Math.random() * 0.03 + 0.025; // Quick clean trail dissipation fade out
         this.speedX = (Math.random() - 0.5) * 2;
         this.speedY = (Math.random() - 0.5) * 2;
         const colors = ['#ffffff', '#f472b6', '#9333ea', '#fef08a'];
@@ -126,18 +147,9 @@ function handlePointerTrail(e) {
         for (let i = 0; i < 4; i++) {
             ripples.push(new RippleParticle(clientX, clientY));
         }
-        if (!animationActive && ripples.length > 0) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ripples.forEach((r, idx) => {
-                r.update();
-                r.draw();
-                if (r.alpha <= 0) ripples.splice(idx, 1);
-            });
-        }
     }
 }
 
-// Automatically flushes and drops glitter trails out when input breaks off screen limits
 function clearPointerTrail() {
     ripples.forEach(r => { r.decay = 0.09; });
 }
@@ -148,7 +160,7 @@ window.addEventListener('mouseleave', clearPointerTrail);
 window.addEventListener('touchend', clearPointerTrail);
 window.addEventListener('touchcancel', clearPointerTrail);
 
-// --- REBALANCED PARALLAX FLOWERS ENGINE BLOCK ---
+// --- FLOWERS PHYSICS ENVIRONMENT BLOCK ---
 class Flower {
     constructor() {
         this.reset();
@@ -159,7 +171,6 @@ class Flower {
         this.y = -20;
         this.zLayer = Math.random() * 3 + 1; 
         
-        // INCREASING FLOWER PERSPECTIVE SIZES slightly for elegant balance
         const screenFactor = window.innerWidth < 768 ? 6 : 10;
         this.baseSize = Math.random() * (screenFactor - 4) + 4;
         this.size = this.baseSize * (this.zLayer * 0.5); 
@@ -199,7 +210,7 @@ class Flower {
     }
 }
 
-// --- INTERACTIVE CONFETTI BURST ---
+// --- CONFETTI BURST MECHANICAL PROPERTIES ---
 class ConfettiParticle {
     constructor(x, y) {
         this.x = x;
@@ -240,11 +251,12 @@ function triggerConfettiBurst() {
     }
 }
 
-// --- CORE CONTROL ENGINE LOOP ---
+// --- MAIN ENGAGEMENT EXECUTION CONTROL ---
 function startReveal() {
     if (revealTriggered) return;
     revealTriggered = true;
     
+    // Clear pointer trace listeners safely once screen transforms open
     window.removeEventListener('mousemove', handlePointerTrail);
     window.removeEventListener('touchmove', handlePointerTrail);
     window.removeEventListener('mouseleave', clearPointerTrail);
@@ -257,7 +269,6 @@ function startReveal() {
     document.getElementById('triggerBtn').classList.add('hide');
     
     if (!animationActive) {
-        // INCREASING FLOWER VOLUME COUNT slightly for optimal presentation density
         const count = window.innerWidth < 768 ? 35 : 60;
         for (let i = 0; i < count; i++) { flowers.push(new Flower()); }
         animationActive = true;
@@ -279,16 +290,15 @@ function animateMasterScreen() {
         if (r.alpha <= 0) ripples.splice(idx, 1);
     });
 
-    flowers.sort((a, b) => a.zLayer - b.zLayer);
-    flowers.forEach(flower => { flower.update(); flower.draw(); });
-    
+flowers.sort((a, b) => a.zLayer - b.zLayer);
+flowers.forEach(flower => { flower.update(); flower.draw(); });
 confetti.forEach((c, idx) => {
 c.update(); c.draw();
 if (c.alpha <= 0) confetti.splice(idx, 1);
 });
 requestAnimationFrame(animateMasterScreen);
 }
-// --- LIVE MESSAGE TAP INTERACTION ---
+// --- SUB-MESSAGE TAP NAVIGATION INTERACTION LOOP ---
 const messageElement = document.getElementById('messageTap');
 if (messageElement) {
 messageElement.addEventListener('click', () => {
