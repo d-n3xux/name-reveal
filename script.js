@@ -25,9 +25,10 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// --- PRE-REVEAL IDLE CANVAS ENGINE (FADES TRAILS) ---
+// --- PRE-REVEAL IDLE CANVAS ENGINE (FIXES STUCK TRAILS) ---
+// Continually loops and clears the background so particles decay and disappear natively
 function drawPreRevealTrailLoop() {
-    if (revealTriggered) return; 
+    if (revealTriggered) return; // Disengage once main drop starts
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -41,6 +42,7 @@ function drawPreRevealTrailLoop() {
     
     requestAnimationFrame(drawPreRevealTrailLoop);
 }
+// Start tracking loop immediately on load
 requestAnimationFrame(drawPreRevealTrailLoop);
 
 
@@ -113,7 +115,7 @@ class RippleParticle {
         this.y = y;
         this.radius = Math.random() * 2.5 + 1.5; 
         this.alpha = 1;
-        this.decay = Math.random() * 0.03 + 0.025; 
+        this.decay = Math.random() * 0.03 + 0.025; // Quick clean trail dissipation fade out
         this.speedX = (Math.random() - 0.5) * 2;
         this.speedY = (Math.random() - 0.5) * 2;
         const colors = ['#ffffff', '#f472b6', '#9333ea', '#fef08a'];
@@ -138,8 +140,8 @@ class RippleParticle {
 }
 
 function handlePointerTrail(e) {
-    let clientX = e.clientX || (e.touches && e.touches && e.touches.clientX);
-    let clientY = e.clientY || (e.touches && e.touches && e.touches.clientY);
+    let clientX = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX);
+    let clientY = e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY);
     
     if (clientX && clientY) {
         for (let i = 0; i < 4; i++) {
@@ -158,7 +160,7 @@ window.addEventListener('mouseleave', clearPointerTrail);
 window.addEventListener('touchend', clearPointerTrail);
 window.addEventListener('touchcancel', clearPointerTrail);
 
-// --- UPDATED FLOWERS PHYSICS ENVIRONMENT WITH BIG SIZES ---
+// --- FLOWERS PHYSICS ENVIRONMENT BLOCK ---
 class Flower {
     constructor() {
         this.reset();
@@ -167,29 +169,15 @@ class Flower {
     reset() {
         this.x = Math.random() * canvas.width;
         this.y = -20;
+        this.zLayer = Math.random() * 3 + 1; 
         
-        // 1. Determine if this specific particle is a premium big-sized flower
-        this.isBigFlower = Math.random() < 0.15; // 15% chance to generate a big flower
+        const screenFactor = window.innerWidth < 768 ? 6 : 10;
+        this.baseSize = Math.random() * (screenFactor - 4) + 4;
+        this.size = this.baseSize * (this.zLayer * 0.5); 
         
-        if (this.isBigFlower) {
-            // Layer 4 represents close camera foreground layers
-            this.zLayer = 4.2;
-            const screenFactor = window.innerWidth < 768 ? 14 : 24;
-            this.size = (Math.random() * 6 + screenFactor); // Massive foreground footprint
-            this.speedY = Math.random() * 0.8 + 2.2; // Falls noticeably faster due to scale weight
-            this.speedX = (Math.random() - 0.5) * 0.6;
-            this.windForce = 0.2; 
-        } else {
-            // Normal structural background parallax layers
-            this.zLayer = Math.random() * 3 + 1; 
-            const screenFactor = window.innerWidth < 768 ? 6 : 10;
-            this.baseSize = Math.random() * (screenFactor - 4) + 4;
-            this.size = this.baseSize * (this.zLayer * 0.5); 
-            this.speedY = (Math.random() * 1.4 + 0.9) * (this.zLayer * 0.6);
-            this.speedX = (Math.random() - 0.5) * 0.9;
-            this.windForce = 0.5 * (this.zLayer * 0.4); 
-        }
-        
+        this.speedY = (Math.random() * 1.4 + 0.9) * (this.zLayer * 0.6);
+        this.speedX = (Math.random() - 0.5) * 0.9;
+        this.windForce = 0.5 * (this.zLayer * 0.4); 
         this.rotation = Math.random() * Math.PI * 2;
         this.rotationSpeed = (Math.random() - 0.5) * 0.02;
         const colors = ['#ffb7c5', '#ff9ebb', '#ffc0cb', '#fef08a', '#f472b6'];
@@ -205,14 +193,7 @@ class Flower {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
-        
-        // Apply photographic foreground blur filter attributes to big petals
-        if (this.isBigFlower) {
-            ctx.filter = 'blur(2.5px)';
-        } else if (this.zLayer > 2.8) {
-            ctx.filter = 'blur(1px)';
-        }
-        
+        if (this.zLayer > 3.0) { ctx.filter = 'blur(1px)'; }
         ctx.fillStyle = this.color;
         ctx.beginPath();
         for (let i = 0; i < 5; i++) {
@@ -220,12 +201,10 @@ class Flower {
             ctx.ellipse(0, this.size / 2, this.size / 4, this.size / 2, 0, 0, Math.PI * 2);
         }
         ctx.fill();
-        
         ctx.beginPath();
         ctx.arc(0, 0, this.size / 5, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
-        
         ctx.restore();
         ctx.filter = 'none';
     }
@@ -277,6 +256,7 @@ function startReveal() {
     if (revealTriggered) return;
     revealTriggered = true;
     
+    // Clear pointer trace listeners safely once screen transforms open
     window.removeEventListener('mousemove', handlePointerTrail);
     window.removeEventListener('touchmove', handlePointerTrail);
     window.removeEventListener('mouseleave', clearPointerTrail);
@@ -286,26 +266,30 @@ function startReveal() {
     playWhooshSFX();
     playFlowerRustleSFX();
     
-document.getElementById('triggerBtn').classList.add('hide');
-if (!animationActive) {
-// Safe count to accommodate big sizes smoothly
-const count = window.innerWidth < 768 ? 40 : 65;
-for (let i = 0; i < count; i++) { flowers.push(new Flower()); }
-animationActive = true;
-animateMasterScreen();
+    document.getElementById('triggerBtn').classList.add('hide');
+    
+    if (!animationActive) {
+        const count = window.innerWidth < 768 ? 35 : 60;
+        for (let i = 0; i < count; i++) { flowers.push(new Flower()); }
+        animationActive = true;
+        animateMasterScreen();
+    }
+
+    setTimeout(() => {
+        document.getElementById('mainContainer').classList.add('revealed');
+        document.getElementById('nameDisplay').classList.add('show');
+        triggerConfettiBurst();
+    }, 500);
 }
-setTimeout(() => {
-document.getElementById('mainContainer').classList.add('revealed');
-document.getElementById('nameDisplay').classList.add('show');
-triggerConfettiBurst();
-}, 500);
-}
+
 function animateMasterScreen() {
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-ripples.forEach((r, idx) => {
-r.update(); r.draw();
-if (r.alpha <= 0) ripples.splice(idx, 1);
-});
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    ripples.forEach((r, idx) => {
+        r.update(); r.draw();
+        if (r.alpha <= 0) ripples.splice(idx, 1);
+    });
+
 flowers.sort((a, b) => a.zLayer - b.zLayer);
 flowers.forEach(flower => { flower.update(); flower.draw(); });
 confetti.forEach((c, idx) => {
