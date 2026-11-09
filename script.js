@@ -25,10 +25,9 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// --- PRE-REVEAL IDLE CANVAS ENGINE (FIXES STUCK TRAILS) ---
-// Continually loops and clears the background so particles decay and disappear natively
+// --- PRE-REVEAL IDLE CANVAS ENGINE (FADES TRAILS) ---
 function drawPreRevealTrailLoop() {
-    if (revealTriggered) return; // Disengage once main drop starts
+    if (revealTriggered) return; 
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -42,7 +41,6 @@ function drawPreRevealTrailLoop() {
     
     requestAnimationFrame(drawPreRevealTrailLoop);
 }
-// Start tracking loop immediately on load
 requestAnimationFrame(drawPreRevealTrailLoop);
 
 
@@ -115,7 +113,7 @@ class RippleParticle {
         this.y = y;
         this.radius = Math.random() * 2.5 + 1.5; 
         this.alpha = 1;
-        this.decay = Math.random() * 0.03 + 0.025; // Quick clean trail dissipation fade out
+        this.decay = Math.random() * 0.03 + 0.025; 
         this.speedX = (Math.random() - 0.5) * 2;
         this.speedY = (Math.random() - 0.5) * 2;
         const colors = ['#ffffff', '#f472b6', '#9333ea', '#fef08a'];
@@ -140,8 +138,8 @@ class RippleParticle {
 }
 
 function handlePointerTrail(e) {
-    let clientX = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX);
-    let clientY = e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY);
+    let clientX = e.clientX || (e.touches && e.touches && e.touches.clientX);
+    let clientY = e.clientY || (e.touches && e.touches && e.touches.clientY);
     
     if (clientX && clientY) {
         for (let i = 0; i < 4; i++) {
@@ -150,6 +148,7 @@ function handlePointerTrail(e) {
     }
 }
 
+// Flush pointers cleanly when finger breaks surface limits
 function clearPointerTrail() {
     ripples.forEach(r => { r.decay = 0.09; });
 }
@@ -160,7 +159,7 @@ window.addEventListener('mouseleave', clearPointerTrail);
 window.addEventListener('touchend', clearPointerTrail);
 window.addEventListener('touchcancel', clearPointerTrail);
 
-// --- FLOWERS PHYSICS ENVIRONMENT BLOCK ---
+// --- REINSTATED PARALLAX FLOWERS ENGINE BLOCK (REVERTED SIZES) ---
 class Flower {
     constructor() {
         this.reset();
@@ -171,6 +170,7 @@ class Flower {
         this.y = -20;
         this.zLayer = Math.random() * 3 + 1; 
         
+        // Reverted size scaling maps back to original uniform perspective fields
         const screenFactor = window.innerWidth < 768 ? 6 : 10;
         this.baseSize = Math.random() * (screenFactor - 4) + 4;
         this.size = this.baseSize * (this.zLayer * 0.5); 
@@ -193,7 +193,7 @@ class Flower {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rotation);
-        if (this.zLayer > 3.0) { ctx.filter = 'blur(1px)'; }
+        if (this.zLayer > 2.8) { ctx.filter = 'blur(1px)'; }
         ctx.fillStyle = this.color;
         ctx.beginPath();
         for (let i = 0; i < 5; i++) {
@@ -201,16 +201,18 @@ class Flower {
             ctx.ellipse(0, this.size / 2, this.size / 4, this.size / 2, 0, 0, Math.PI * 2);
         }
         ctx.fill();
+        
         ctx.beginPath();
         ctx.arc(0, 0, this.size / 5, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
+        
         ctx.restore();
         ctx.filter = 'none';
     }
 }
 
-// --- CONFETTI BURST MECHANICAL PROPERTIES ---
+// --- INTERACTIVE CONFETTI BURST ---
 class ConfettiParticle {
     constructor(x, y) {
         this.x = x;
@@ -256,7 +258,6 @@ function startReveal() {
     if (revealTriggered) return;
     revealTriggered = true;
     
-    // Clear pointer trace listeners safely once screen transforms open
     window.removeEventListener('mousemove', handlePointerTrail);
     window.removeEventListener('touchmove', handlePointerTrail);
     window.removeEventListener('mouseleave', clearPointerTrail);
@@ -269,6 +270,7 @@ function startReveal() {
     document.getElementById('triggerBtn').classList.add('hide');
     
     if (!animationActive) {
+        // Reverted back to the original sleek volume parameters
         const count = window.innerWidth < 768 ? 35 : 60;
         for (let i = 0; i < count; i++) { flowers.push(new Flower()); }
         animationActive = true;
@@ -290,7 +292,7 @@ function animateMasterScreen() {
         if (r.alpha <= 0) ripples.splice(idx, 1);
     });
 
-flowers.sort((a, b) => a.zLayer - b.zLayer);
+    flowers.sort((a, b) => a.zLayer - b.zLayer);
 flowers.forEach(flower => { flower.update(); flower.draw(); });
 confetti.forEach((c, idx) => {
 c.update(); c.draw();
