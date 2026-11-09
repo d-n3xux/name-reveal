@@ -1,0 +1,167 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #10081a 0%, #05020a 100%);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.stage-container {
+    position: relative;
+    z-index: 5;
+    padding: 40px 30px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    width: 90%;
+    max-width: 650px; 
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.stage-container.revealed {
+    background: rgba(234, 179, 8, 0.03);
+    border-color: rgba(234, 179, 8, 0.3);
+    box-shadow: 0 40px 90px rgba(234, 179, 8, 0.15),
+                0 0 50px rgba(219, 39, 119, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: scale(1.02);
+}
+
+.reveal-btn {
+    padding: 14px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, #db2777 0%, #9333ea 100%);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    box-shadow: 0 10px 25px rgba(147, 51, 234, 0.4);
+    transition: all 0.4s ease;
+    position: absolute;
+    opacity: 1;
+    transform: scale(1);
+    z-index: 10;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.reveal-btn:active {
+    transform: scale(0.95);
+}
+
+.reveal-btn.hide {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+    pointer-events: none;
+}
+
+.name-display {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+    transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-align: center;
+    pointer-events: none;
+    width: 100%;
+}
+
+.name-display.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.first-glow {
+    font-size: 3.2rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(to right, #ffffff 20%, #fef08a 50%, #f472b6 80%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: textShine 4s linear infinite;
+    filter: drop-shadow(0 2px 15px rgba(234, 179, 8, 0.3));
+    white-space: nowrap; 
+}
+
+.sub-text {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.8rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 16px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.8s ease 0.5s;
+}
+
+.name-display.show .sub-text {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.interactive-msg {
+    cursor: pointer;
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    pointer-events: auto !important; 
+    user-select: none;
+}
+
+.interactive-msg:hover {
+    color: #fef08a;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(254, 240, 138, 0.3);
+    transform: translateY(-1px);
+}
+
+.interactive-msg:active {
+    transform: scale(0.97);
+}
+
+@media(min-width: 768px) {
+    .stage-container { padding: 50px 80px; min-height: 250px; }
+    .first-glow { font-size: 4.5rem; letter-spacing: 12px; }
+    .sub-text { font-size: 0.9rem; letter-spacing: 6px; margin-top: 20px; }
+    .reveal-btn { padding: 16px 36px; font-size: 1.1rem; }
+}
+
+@keyframes textShine {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
